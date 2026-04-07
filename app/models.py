@@ -29,7 +29,7 @@ class Click(Base):
 
     url = relationship("URL", back_populates="clicks")
 
-class Admin(Base)
+class Admin(Base):
     __tablename__ = "admins"
 
     id = Column(Integer, primary_key=True, index=True)

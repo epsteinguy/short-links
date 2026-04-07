@@ -5,16 +5,16 @@ from typing import Optional
 class URLCreate(BaseModel):
     url: HttpUrl
 
-class URLRespose(BaseModel):
+class URLResponse(BaseModel):
     short_code: str
     short_url: str 
-    original_url: set
+    original_url: str
     created_at: datetime
 
     class Config: 
         from_attributes = True
 
-class ClickInfo(BaseModel)
+class ClickInfo(BaseModel):
     ip_address: Optional[str] = None 
     country: Optional[str] = None 
     city: Optional[str] = None
@@ -26,7 +26,7 @@ class ClickInfo(BaseModel)
     class Config:
         from_attributes = True
 
-class AdminCreate(BaseModel)
+class AdminCreate(BaseModel):
     username: str
     password: str
 

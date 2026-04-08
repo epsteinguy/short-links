@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.database import engine, Base
 from app.config import get_settings
-from app.routers import urls
+from app.routers import urls, admin
 
 settings = get_settings()
 
@@ -31,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(urls.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def root():

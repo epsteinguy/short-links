@@ -16,5 +16,4 @@ def generate_unique_short_code(db, lenght: int = 6, max_attempts: int = 10) -> s
         existing = db.query(URL).filter(URL.short_code == code).first()
         if not existing:
             return code
-        
         return generate_unique_short_code(db, lenght + 1, max_attempts)

@@ -8,7 +8,8 @@ class Token(BaseModel):
 
 class URLCreate(BaseModel):
     url: HttpUrl
-
+    custom_code: Optional[str] = None
+    
 class URLResponse(BaseModel):
     short_code: str
     short_url: str 

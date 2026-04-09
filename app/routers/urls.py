@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import URL, Click
 from app.schemas import URLCreate, URLResponse
-from app.utils import generate_unique_short_code
+from app.utils import generate_unique_short_code, validate_custom_code, is_code_available
 from app.config import get_settings
 from app.geolocation import get_location_from_ip, get_client_ip
 from app.user_agent_parser import parse_user_agent
@@ -19,15 +19,26 @@ def shorten_url(url_data: URLCreate, db: Session = Depends(get_db)):
 
     - Accepts any valid URL
     - Returns a unique short code
+    - Accepts a custom code
     """
+    if url_data.custom_code:
+        custom_code = url_data.custom_code.strip()
 
-    short_code = generate_unique_short_code(db)
+        is_valid, error_msg = validate_custom_code(custom_code)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+
+        if not is_code_available(db, custom_code):
+            raise HTTPException(status_code=409, detail=f"Short code '{custom_code}' is already taken")
+
+        short_code = custom_code
+    else:
+        short_code = generate_unique_short_code(db)
 
     db_url = URL(
         short_code=short_code,
         original_url=str(url_data.url)
     )
-
     db.add(db_url)
     db.commit()
     db.refresh(db_url)

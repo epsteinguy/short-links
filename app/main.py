@@ -8,23 +8,25 @@ from app.routers import urls, admin
 
 settings = get_settings()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    print=("Data tables made")
+    print("Data tables made")
     yield
-    print=("rip my code it got hit by a bug..")
+    print("Shutting down")
+
 
 app = FastAPI(
     title="Link Shortener API",
     description="A Link Shortener with click and geolocation tracking",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,13 +35,11 @@ app.add_middleware(
 app.include_router(urls.router)
 app.include_router(admin.router)
 
+
 @app.get("/")
 def root():
-    return {
-        "status": "online",
-        "message": "L-S-API is up!",
-        "docs": "/docs"
-    }
+    return {"status": "online", "message": "L-S-API is up!", "docs": "/docs"}
+
 
 @app.get("/health")
 def health_check():

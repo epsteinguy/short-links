@@ -2,13 +2,15 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.models import Admin
+from app.models import Admin, APIKey
+import hashlib
+import secrets
 
 settings = get_settings()
 
@@ -77,3 +79,34 @@ def get_current_admin(
         )
     
     return admin
+
+def hash_api_key(raw_key: str) -> str:
+    return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+
+def generate_api_key() -> tuple[str, str, str]:
+    raw_key = f"sl_{secrets.token_urlsafe(32)}"
+    key_hash = hash_api_key(raw_key)
+    key_prefix = raw_key[:10]
+    return raw_key, key_hash, key_prefix
+
+def get_api_key_client(
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    db: Session = Depends(get_db),
+) -> APIKey:
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="Missing X-API-Key header")
+
+    key_hash = hash_api_key(x_api_key.strip())
+    api_key = db.query(APIKey).filter(
+        APIKey.key_hash == key_hash,
+        APIKey.is_active == True
+    ).first()
+
+    if not api_key:
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+
+    api_key.request_count += 1
+    api_key.last_used_at = datetime.utcnow()
+    db.commit()
+    db.refresh(api_key)
+    return api_key

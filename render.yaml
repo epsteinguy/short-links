@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: short-links-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: short-links-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: BASE_URL
+        value: https://short-links-api.onrender.com
+      - key: CORS_ORIGINS
+        value: "*"
+
+databases:
+  - name: short-links-db
+    plan: free

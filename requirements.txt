@@ -3,8 +3,9 @@ uvicorn[standard]
 sqlalchemy
 pydantic
 pydantic-settings
-python-jose[cryptograph]
+python-jose[cryptography]
 passlib[bcrypt]
 httpx
 python-dotenv
 user-agents
+psycopg[binary]

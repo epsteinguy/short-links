@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,7 @@ from app.auth import (
 )
 from app.database import get_db
 from app.models import APIKey, Admin, Click, URL
+from app.config import get_settings
 from app.schemas import (
     APIKeyCreate,
     APIKeyCreated,
@@ -21,10 +22,43 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+settings = get_settings()
 
 
 @router.post("/register", response_model=dict)
-def register_admin(admin_data: AdminCreate, db: Session = Depends(get_db)):
+def register_admin(
+    admin_data: AdminCreate,
+    db: Session = Depends(get_db),
+    x_admin_bootstrap_token: str | None = Header(
+        default=None,
+        alias="X-Admin-Bootstrap-Token",
+    ),
+):
+    existing_admin_count = db.query(func.count(Admin.id)).scalar() or 0
+    if existing_admin_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin already exists. Registration is locked.",
+        )
+
+    if not settings.ADMIN_BOOTSTRAP_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin bootstrap is disabled",
+        )
+
+    if x_admin_bootstrap_token != settings.ADMIN_BOOTSTRAP_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid bootstrap token",
+        )
+
+    if len(admin_data.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters",
+        )
+
     existing = db.query(Admin).filter(Admin.username == admin_data.username).first()
     if existing:
         raise HTTPException(

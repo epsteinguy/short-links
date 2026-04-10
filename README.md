@@ -30,6 +30,7 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=2880
 BASE_URL=http://localhost:8080
 CORS_ORIGINS=*
+ADMIN_BOOTSTRAP_TOKEN=replace_with_one_time_secret
 ```
 
 4. Run server:
@@ -75,6 +76,26 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 - `SECRET_KEY` -> long random string
 - `BASE_URL` -> your app URL
 - `CORS_ORIGINS` -> `*` (or your frontend domain)
+- `ADMIN_BOOTSTRAP_TOKEN` -> one-time secret used for first admin creation
+
+## Admin Locking (single admin owner)
+
+`POST /admin/register` only works when all conditions pass:
+
+- No admin exists yet
+- `ADMIN_BOOTSTRAP_TOKEN` env var is set
+- Header `X-Admin-Bootstrap-Token` matches that env var
+
+After first admin is created, registration is locked forever unless you manually delete admins from DB.
+
+Example first admin creation:
+
+```bash
+curl -X POST "http://localhost:8080/admin/register" \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Bootstrap-Token: replace_with_one_time_secret" \
+  -d '{"username":"yourname","password":"StrongPass123"}'
+```
 
 ## Why not Cloudflare Workers?
 

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 48
     BASE_URL: str = "http://localhost:8080"
     CORS_ORIGINS: str = "*"
+    ADMIN_BOOTSTRAP_TOKEN: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
